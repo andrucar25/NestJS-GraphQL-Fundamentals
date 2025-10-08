@@ -8,15 +8,43 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { JwtService } from '@nestjs/jwt';
+import { SeedModule } from './seed/seed.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+
+    // GraphQLModule.forRoot<ApolloDriverConfig>({
+    //   autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+    //   driver: ApolloDriver,
+    //   playground: false,
+    //   plugins: [ApolloServerPluginLandingPageLocalDefault()],
+    // }),
+
+    //Esto es opcional, la configuracion basica comentada de arriba es la minima necesaria
+    //de esta manera asegura que tenga cargado los modulos y luego solcitar acceso al JWT module
+    //solo es una prueba de que si no viene el token en las peticiones, se bloquee el schema graphql
+    GraphQLModule.forRootAsync({
       driver: ApolloDriver,
-      playground: false,
-      plugins: [ApolloServerPluginLandingPageLocalDefault()],
+      imports: [ AuthModule ],
+      inject: [ JwtService ],
+      useFactory: async( jwtService: JwtService ) => ({
+        playground: false,
+        autoSchemaFile: join( process.cwd(), 'src/schema.gql'), 
+        plugins: [
+          ApolloServerPluginLandingPageLocalDefault
+        ],
+        context({ req }) {
+          // const token = req.headers.authorization?.replace('Bearer ','');
+          // if ( !token ) throw Error('Token needed');
+
+          // const payload = jwtService.decode( token );
+          // if ( !payload ) throw Error('Token not valid');
+          
+        }
+      })
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -31,6 +59,8 @@ import { AuthModule } from './auth/auth.module';
     ItemsModule,
     UsersModule,
     AuthModule,
+    SeedModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],

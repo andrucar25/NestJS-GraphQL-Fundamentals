@@ -12,5 +12,8 @@ import { Item } from './entities/item.entity';
     ItemsResolver, 
     ItemsService
   ],
+  exports: [
+    ItemsService
+  ]
 })
 export class ItemsModule {}
